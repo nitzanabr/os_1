@@ -89,14 +89,19 @@ int main(int argc, char* argv[])
     timespec_get(&t_dummy, TIME_UTC);
     const uint64_t zero = nanosectime(t_dummy)>1000000000ull?0:nanosectime(t_dummy);
     uint64_t  max_size = strtoull(argv[1],NULL,10);
-    uint64_t  factor = strtoull(argv[2],NULL,10);
+    double  factor = strtod(argv[2],NULL);
     uint64_t  repeat = strtoull(argv[3],NULL,10);
-    for(uint64_t size =1 ; size <= max_size; size*=factor){
-        array_element_t * arr = (array_element_t*)malloc(size* sizeof(array_element_t));
-        struct measurement seq_measure= measure_sequential_latency(repeat, arr, sizeof(arr), zero);
-        struct measurement rand_measure = measure_latency(repeat, arr,sizeof (arr), zero);
-        printf("%lu, %f, %f\n", size, rand_measure.access_time, seq_measure.access_time);
+
+    uint64_t size =100;
+    while(size < max_size ){
+        array_element_t * arr = (array_element_t*)malloc(size);
+        uint64_t size_b = size / sizeof(array_element_t);
+        struct measurement seq_measure= measure_sequential_latency(repeat, arr, size_b, zero);
+        struct measurement rand_measure = measure_latency(repeat, arr,size_b, zero);
+        printf("%lu, %f, %f\n", size, rand_measure.access_time-rand_measure.baseline, seq_measure.access_time-seq_measure.baseline);
         free(arr);
+        size= size*factor;
+        size= ceil(size);
     }
   return 0;
 }
